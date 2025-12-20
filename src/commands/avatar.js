@@ -2,6 +2,7 @@
 
 module.exports = {
   name: "avatar",
+  allowDirectMessage: true,
   requiredPermissions: ["SEND_MESSAGES"],
   async execute({ message }) {
     const user = message.mentions.users.first() || message.author;

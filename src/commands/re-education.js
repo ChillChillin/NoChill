@@ -2,6 +2,7 @@
 
 module.exports = {
   name: "re-education",
+  allowDirectMessage: true,
   requiredPermissions: ["SEND_MESSAGES"],
   async execute({ message }) {
     await message.channel.send(

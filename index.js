@@ -9,6 +9,7 @@ const logger = require("./src/logger");
 const commands = require("./src/commands");
 const createGiphyService = require("./src/services/giphy");
 const { hasPermissions } = require("./src/utils/permissions");
+const { createCooldownTracker } = require("./src/utils/commandCooldown");
 
 const client = new Client();
 const services = {
@@ -18,9 +19,18 @@ const services = {
 const commandRegistry = new Map(
   commands.map((command) => [command.name, command])
 );
+const cooldowns = createCooldownTracker({ cooldownMs: config.cooldownMs });
 
 const sendPermissionError = async (message) => {
   await message.channel.send("Nice try, but you’re not allowed, cunt.");
+};
+
+const sendCooldownError = async (message) => {
+  await message.channel.send("Ease up, ya spammy cunt. Try again shortly.");
+};
+
+const sendCommandError = async (message) => {
+  await message.channel.send("That one blew up. Try again later, cunt.");
 };
 
 client.once("ready", () => {
@@ -51,17 +61,33 @@ client.on("message", async (message) => {
     return;
   }
 
-  if (!hasPermissions(message.member, command.requiredPermissions)) {
+  if (
+    !message.guild &&
+    !command.allowDirectMessage
+  ) {
+    await message.channel.send("That command only works in a server, cunt.");
+    return;
+  }
+
+  if (message.guild && !hasPermissions(message.member, command.requiredPermissions)) {
     await sendPermissionError(message);
     return;
   }
 
+  if (cooldowns.isOnCooldown({ commandName: command.name, userId: message.author.id })) {
+    await sendCooldownError(message);
+    return;
+  }
+
+  cooldowns.markUsed({ commandName: command.name, userId: message.author.id });
+
   try {
-    await command.execute({ message, args, services });
+    await command.execute({ message, args, services, config });
   } catch (error) {
     logger.error(
       `Command failed: ${commandName} - ${error.message || error.toString()}`
     );
+    await sendCommandError(message);
   }
 });
 

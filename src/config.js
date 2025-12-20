@@ -12,4 +12,6 @@ module.exports = {
   prefix: process.env.prefix || "!",
   token: requiredEnv("token"),
   giphyToken: requiredEnv("giphyToken"),
+  cooldownMs: Number(process.env.cooldownMs) || 3000,
+  maxMessageLength: Number(process.env.maxMessageLength) || 2000,
 };

@@ -2,6 +2,7 @@
 
 module.exports = {
   name: "gif",
+  allowDirectMessage: true,
   requiredPermissions: ["SEND_MESSAGES"],
   async execute({ message, args, services }) {
     const query = args.join(" ").trim();
