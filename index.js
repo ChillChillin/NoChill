@@ -17,7 +17,9 @@ client.on("guildMemberAdd", (member) => {
     (ch) => ch.name === "member-log"
   );
   if (!channel) return;
-  channel.send(`Welcome to the server, ${member}`);
+  channel.send(
+    `Oi ${member}, welcome in ya cheeky cunt. Behave... or don't.`
+  );
 });
 
 client.on("message", (message) => {
@@ -34,10 +36,7 @@ client.on("message", (message) => {
               Math.floor(Math.random() * 10 + 1) % totalResponses;
             var responseFinal = response.data[responseIndex];
             message.channel.send(
-              ":middle_finger: " +
-                member.displayName +
-                " has been kicked! " +
-                ":middle_finger: ",
+              `:middle_finger: ${member.displayName} just got the boot, ya filthy cunt. :middle_finger:`,
               {
                 files: [responseFinal.images.fixed_height.url],
               }
@@ -45,7 +44,9 @@ client.on("message", (message) => {
             console.log(files);
           })
           .catch(() => {
-            message.channel.send("Can't kick out the fucking user!!!");
+            message.channel.send(
+              "Couldn’t kick that bastard. Discord’s being a useless cunt."
+            );
           });
       });
     }
@@ -67,7 +68,9 @@ client.on("message", (message) => {
           });
         })
         .catch(() => {
-          message.channel.send("Can't find this gif you FUCKER!!!");
+          message.channel.send(
+            "No gif for that, ya hopeless cunt. Try a real word."
+          );
         });
     }
   }
@@ -77,7 +80,9 @@ client.on("message", (message) => {
       try {
         let guildMemeber = message.mentions.members.first();
         messageString = message.content.split(guildMemeber.id).pop();
-        guildMemeber.send(`${message.member.user} says ` + messageString);
+        guildMemeber.send(
+          `${message.member.user} says ${messageString} — delivered like a sneaky cunt.`
+        );
         message.delete();
       } catch (err) {}
     }
@@ -89,9 +94,13 @@ client.on("message", (message) => {
         let guildMemeber = message.mentions.members.first();
         var game = guildMemeber.presence.activities;
         if (game.toString() == "") {
-          message.channel.send(`${guildMemeber} is not playing`);
+          message.channel.send(
+            `${guildMemeber} isn’t playing anything, lazy cunt.`
+          );
         } else {
-          message.channel.send(`${guildMemeber} is playing ${game.toString()}`);
+          message.channel.send(
+            `${guildMemeber} is playing ${game.toString()} — try not to suck, cunt.`
+          );
         }
       } catch (err) {}
     }
@@ -100,7 +109,9 @@ client.on("message", (message) => {
   if (message.content.startsWith(`${process.env.prefix}re-education`)) {
     if (message.member.hasPermission(["SEND_MESSAGES"])) {
       try {
-        message.channel.send("https://www.youtube.com/watch?v=U06jlgpMtQs");
+        message.channel.send(
+          "Off to re-education, ya cooked cunt: https://www.youtube.com/watch?v=U06jlgpMtQs"
+        );
       } catch (err) {}
     }
   }
@@ -109,7 +120,7 @@ client.on("message", (message) => {
     if (message.member.hasPermission(["SEND_MESSAGES"])) {
       let user = message.mentions.users.first() || message.author;
       message.channel.send(
-        `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`
+        `Here’s the mug, ya nosy cunt: https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`
       );
     }
   }
@@ -119,14 +130,14 @@ client.on("message", (message) => {
       const attachment = new MessageAttachment(
         "https://i.imgur.com/biT8Si9.jpg"
       );
-      message.channel.send(attachment);
+      message.channel.send("Cop this, ya rude cunt.", attachment);
     }
   }
   async function search(query) {
     const { list } = await fetch(
       `https://api.urbandictionary.com/v0/define?term=${query}`
     ).then((response) => response.json());
-    message.channel.send(list[0].definition);
+    message.channel.send(`Alright ya curious cunt, here ya go:\n${list[0].definition}`);
   }
   //SEARCH ON URBAN DISCTIONARY
   if (message.content.startsWith(`${process.env.prefix}urban`)) {
