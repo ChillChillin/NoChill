@@ -1,15 +1,30 @@
-const { Client, MessageAttachment } = require("discord.js");
-const client = new Client();
-const fetch = require("node-fetch");
-const querystring = require("querystring");
+"use strict";
+
+const { Client } = require("discord.js");
 
 require("dotenv").config();
 
-var GphApiClient = require("giphy-js-sdk-core");
-giphy = GphApiClient(process.env.giphyToken);
+const config = require("./src/config");
+const logger = require("./src/logger");
+const commands = require("./src/commands");
+const createGiphyService = require("./src/services/giphy");
+const { hasPermissions } = require("./src/utils/permissions");
+
+const client = new Client();
+const services = {
+  giphy: createGiphyService(config.giphyToken),
+};
+
+const commandRegistry = new Map(
+  commands.map((command) => [command.name, command])
+);
+
+const sendPermissionError = async (message) => {
+  await message.channel.send("Nice try, but you’re not allowed, cunt.");
+};
 
 client.once("ready", () => {
-  console.log("Bot running successfully!");
+  logger.info("Bot running successfully!");
 });
 
 client.on("guildMemberAdd", (member) => {
@@ -17,124 +32,45 @@ client.on("guildMemberAdd", (member) => {
     (ch) => ch.name === "member-log"
   );
   if (!channel) return;
-  channel.send(`Welcome to the server, ${member}`);
+  channel.send(`Oi ${member}, welcome in ya cheeky cunt. Behave... or don't.`);
 });
 
-client.on("message", (message) => {
-  //KICK MEMBERS
-  if (message.content.startsWith(`${process.env.prefix}kick`)) {
-    if (message.member.hasPermission(["KICK_MEMBERS", "BAN_MEMBERS"])) {
-      let member = message.mentions.members.first();
-      member.kick().then((member) => {
-        giphy
-          .search("gifs", { q: "fail" })
-          .then((response) => {
-            var totalResponses = response.data.length;
-            var responseIndex =
-              Math.floor(Math.random() * 10 + 1) % totalResponses;
-            var responseFinal = response.data[responseIndex];
-            message.channel.send(
-              ":middle_finger: " +
-                member.displayName +
-                " has been kicked! " +
-                ":middle_finger: ",
-              {
-                files: [responseFinal.images.fixed_height.url],
-              }
-            );
-            console.log(files);
-          })
-          .catch(() => {
-            message.channel.send("Can't kick out the fucking user!!!");
-          });
-      });
-    }
+client.on("message", async (message) => {
+  if (message.author.bot || !message.content.startsWith(config.prefix)) {
+    return;
   }
-  //FIND GIFS
-  if (message.content.startsWith(`${process.env.prefix}gif`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      var actualgif = message.content.split("gif").pop();
-      actualgif = actualgif.trim();
-      giphy
-        .search("gifs", { q: actualgif })
-        .then((response) => {
-          var totalResponses = response.data.length;
-          var responseIndex =
-            Math.floor(Math.random() * 10 + 1) % totalResponses;
-          var responseFinal = response.data[responseIndex];
-          message.channel.send({
-            files: [responseFinal.images.fixed_height.url],
-          });
-        })
-        .catch(() => {
-          message.channel.send("Can't find this gif you FUCKER!!!");
-        });
-    }
+
+  const input = message.content.slice(config.prefix.length).trim();
+  if (!input) {
+    return;
   }
-  //SEND DM
-  if (message.content.startsWith(`${process.env.prefix}dm`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      try {
-        let guildMemeber = message.mentions.members.first();
-        messageString = message.content.split(guildMemeber.id).pop();
-        guildMemeber.send(`${message.member.user} says ` + messageString);
-        message.delete();
-      } catch (err) {}
-    }
+
+  const [commandName, ...args] = input.split(/\s+/);
+  const command = commandRegistry.get(commandName.toLowerCase());
+  if (!command) {
+    return;
   }
-  //SHOW WHAT GAME THEY ARE PLAYING
-  if (message.content.startsWith(`${process.env.prefix}game`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      try {
-        let guildMemeber = message.mentions.members.first();
-        var game = guildMemeber.presence.activities;
-        if (game.toString() == "") {
-          message.channel.send(`${guildMemeber} is not playing`);
-        } else {
-          message.channel.send(`${guildMemeber} is playing ${game.toString()}`);
-        }
-      } catch (err) {}
-    }
+
+  if (!hasPermissions(message.member, command.requiredPermissions)) {
+    await sendPermissionError(message);
+    return;
   }
-  //Re-education camp (user request!)
-  if (message.content.startsWith(`${process.env.prefix}re-education`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      try {
-        message.channel.send("https://www.youtube.com/watch?v=U06jlgpMtQs");
-      } catch (err) {}
-    }
-  }
-  //SHOW USERS AVATAR
-  if (message.content.startsWith(`${process.env.prefix}avatar`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      let user = message.mentions.users.first() || message.author;
-      message.channel.send(
-        `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`
-      );
-    }
-  }
-  //SHOW The Finger!
-  if (message.content.startsWith(`${process.env.prefix}finger`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      const attachment = new MessageAttachment(
-        "https://i.imgur.com/biT8Si9.jpg"
-      );
-      message.channel.send(attachment);
-    }
-  }
-  async function search(query) {
-    const { list } = await fetch(
-      `https://api.urbandictionary.com/v0/define?term=${query}`
-    ).then((response) => response.json());
-    message.channel.send(list[0].definition);
-  }
-  //SEARCH ON URBAN DISCTIONARY
-  if (message.content.startsWith(`${process.env.prefix}urban`)) {
-    if (message.member.hasPermission(["SEND_MESSAGES"])) {
-      const query = message.content.split("urban ").pop();
-      search(query);
-    }
+
+  try {
+    await command.execute({ message, args, services });
+  } catch (error) {
+    logger.error(
+      `Command failed: ${commandName} - ${error.message || error.toString()}`
+    );
   }
 });
 
-client.login(process.env.token);
+process.on("unhandledRejection", (error) => {
+  logger.error(`Unhandled rejection: ${error.message || error.toString()}`);
+});
+
+process.on("uncaughtException", (error) => {
+  logger.error(`Uncaught exception: ${error.message || error.toString()}`);
+});
+
+client.login(config.token);
